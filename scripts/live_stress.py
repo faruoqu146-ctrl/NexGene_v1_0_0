@@ -37,9 +37,11 @@ def user_journey(base: str, idx: int) -> dict:
         statuses = []
         r = c.post("/api/v1/auth/register", json={"email": email, "password": password})
         statuses.append(("register", r.status_code))
-        r = c.post("/api/v1/auth/login", json={"email": email, "password": password})
-        statuses.append(("login", r.status_code))
         csrf = r.cookies.get("nexgene_csrf")
+        if not csrf:
+            r = c.post("/api/v1/auth/login", json={"email": email, "password": password})
+            statuses.append(("login", r.status_code))
+            csrf = r.cookies.get("nexgene_csrf")
         headers = {"X-CSRF-Token": csrf} if csrf else {}
         r = c.put(
             "/api/v1/profile",
@@ -71,29 +73,15 @@ def main() -> None:
     p.add_argument("--users", type=int, default=20)
     p.add_argument("--gets", type=int, default=80)
     args = p.parse_args()
-
     wait_for(args.base)
     print(f"target {args.base}")
-
     with httpx.Client(base_url=args.base, timeout=10.0) as c:
-        latencies = []
-        codes = []
+        latencies, codes = [], []
         for _ in range(args.gets):
             code, ms = timed_get(c, "/")
             codes.append(code)
             latencies.append(ms)
-        print(
-            "GET / x%d  codes=%s  min=%.1fms p50=%.1fms p95=%.1fms max=%.1fms"
-            % (
-                args.gets,
-                dict(Counter(codes)),
-                min(latencies),
-                statistics.median(latencies),
-                sorted(latencies)[max(0, int(len(latencies) * 0.95) - 1)],
-                max(latencies),
-            )
-        )
-
+        print("GET / x%d  codes=%s  min=%.1fms p50=%.1fms p95=%.1fms max=%.1fms" % (args.gets, dict(Counter(codes)), min(latencies), statistics.median(latencies), sorted(latencies)[max(0, int(len(latencies) * 0.95) - 1)], max(latencies)))
     results = []
     t0 = time.perf_counter()
     with ThreadPoolExecutor(max_workers=min(args.users, 16)) as pool:
@@ -103,10 +91,7 @@ def main() -> None:
     wall = time.perf_counter() - t0
     ok = sum(1 for r in results if r["ok"])
     times = [r["ms"] for r in results]
-    print(
-        "journeys %d/%d ok in %.2fs  min=%.0fms p50=%.0fms max=%.0fms"
-        % (ok, len(results), wall, min(times), statistics.median(times), max(times))
-    )
+    print("journeys %d/%d ok in %.2fs  min=%.0fms p50=%.0fms max=%.0fms" % (ok, len(results), wall, min(times), statistics.median(times), max(times)))
     fails = [r for r in results if not r["ok"]]
     if fails:
         print("failures:")
