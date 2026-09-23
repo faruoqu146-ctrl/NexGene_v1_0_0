@@ -15,8 +15,22 @@ Open **http://localhost:8000**.
 ## Test
 
 ```bash
+DATABASE_URL=sqlite:////tmp/nexgene_test.db pytest -q
+```
+
+Inside Compose:
+
+```bash
 docker compose exec api pytest -q
 ```
+
+Live concurrent stress (API already running):
+
+```bash
+python scripts/live_stress.py --users 20 --gets 80
+```
+
+Health check: `GET /api/v1/health` → `{"status":"ok","version":"1.0.0"}`.
 
 ## v1.0.0: Personalization + Weekly Report
 
