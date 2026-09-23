@@ -1,82 +1,433 @@
-# NexGene v1.0.0
 
-APP_VERSION: 1.0.0
+NexGene v1.0.0
 
-Phase 4: personalization context and the Weekly NexGene Report, building on v0.9.0 Signals and the v0.8.x security hardening.
+«Build the biological picture before the disease becomes the story.»
 
-## Run locally
+NexGene is a longitudinal personal-data platform designed to progressively build a richer picture of an individual's health and biology.
 
-```bash
-docker compose up --build
-```
+v1.0.0 is the Lifestyle Layer.
 
-Open **http://localhost:8000**.
+It currently focuses on lifestyle observations, simple physiological signals, personal context, longitudinal patterns, and cautious weekly reports.
 
-## Test
+NexGene is not a medical device, diagnostic system, or clinical decision-support system in this release.
 
-```bash
+---
+
+Vision
+
+The long-term NexGene architecture is built around four progressively integrated data layers:
+
+Phase| Domain| Status
+Phase 1| Lifestyle| 🟢 v1.0.0
+Phase 2| Physiology| Planned
+Phase 3| Clinical| Planned
+Phase 4| Genomic| Planned
+
+The long-term objective is to combine these layers into a longitudinal biological profile that can support research and, eventually, more precise approaches to prevention and medicine.
+
+The current release is deliberately much narrower.
+
+Build the foundation first.
+
+---
+
+What v1.0.0 Does
+
+NexGene currently supports:
+
+- Account registration and authentication
+- Secure session management
+- Morning and evening check-ins
+- Personal context
+- Lifestyle observations
+- Simple physiological signal entry
+- Timeline of observations
+- Pattern summaries
+- Signal generation
+- Early insights
+- Weekly NexGene reports
+- CSRF protection
+- Per-user data isolation
+- Rate limiting
+- Request-size validation
+- Password reset and email-verification flows
+- Development security testing
+
+Core user loop
+
+Record
+   ↓
+Observe
+   ↓
+Discover
+   ↓
+Return
+   ↓
+Accumulate longitudinal data
+   ↓
+Weekly report
+   ↓
+Discover more
+
+The goal is not to manufacture certainty from limited data.
+
+The system uses cautious language around patterns and avoids presenting short-term observations as diagnoses or established causal relationships.
+
+---
+
+Current Product Surface
+
+Today
+
+Morning and evening check-ins, current snapshot, signals, and early observations.
+
+Patterns
+
+Longer-term summaries based on accumulated observations, including approximately 30-day views where sufficient data exists.
+
+Report
+
+A weekly narrative containing:
+
+- Data coverage
+- Observed relationships
+- Positive observations
+- One suggested experiment
+
+The report is intentionally non-clinical and does not claim that one week establishes causation.
+
+Timeline
+
+Chronological history of recorded observations.
+
+Context
+
+Optional information that helps interpret observations, including:
+
+- Age range
+- Country
+- Occupation
+- Student status
+- Field of study
+- Schedule
+- Timezone
+
+Context is used as analytical context rather than as a basis for demographic stereotypes or automatic health conclusions.
+
+---
+
+Architecture
+
+                 ┌─────────────────────┐
+                 │     Mobile SPA      │
+                 │       /static       │
+                 └──────────┬──────────┘
+                            │
+                            ▼
+                 ┌─────────────────────┐
+                 │       FastAPI       │
+                 │      REST API       │
+                 └──────────┬──────────┘
+                            │
+              ┌─────────────┼─────────────┐
+              ▼             ▼             ▼
+           Auth         Data Layer     Reports
+              │             │             │
+              └─────────────┼─────────────┘
+                            ▼
+                    SQLAlchemy 2.x
+                            │
+                            ▼
+                         SQLite
+
+Stack
+
+- Backend: FastAPI
+- Database: SQLite / SQLAlchemy 2.x
+- Frontend: Mobile-oriented SPA
+- Authentication: HttpOnly cookie sessions + CSRF protection
+- Password hashing: PBKDF2-SHA256
+- Deployment: Docker / Docker Compose
+- Runtime: Python
+
+---
+
+API
+
+Primary API groups include:
+
+Authentication
+
+POST /api/v1/auth/register
+POST /api/v1/auth/login
+POST /api/v1/auth/logout
+GET  /api/v1/auth/csrf
+GET  /api/v1/auth/me
+...
+
+Data
+
+POST /api/v1/checkins/morning
+POST /api/v1/checkins/evening
+GET  /api/v1/today
+GET  /api/v1/timeline
+GET  /api/v1/patterns
+GET  /api/v1/signals
+GET  /api/v1/insights
+
+v1.0 additions
+
+GET /api/v1/profile
+PUT /api/v1/profile
+
+GET /api/v1/reports/weekly
+
+Operations
+
+GET /api/v1/health
+
+---
+
+Security
+
+Security is treated as a core part of the development architecture rather than a final deployment step.
+
+Current controls include:
+
+- Password policy requiring 12+ characters
+- Uppercase, lowercase, number, and symbol requirements
+- PBKDF2-SHA256 with 600,000 rounds
+- Dummy password verification for missing accounts
+- Uniform authentication errors
+- HttpOnly session cookies
+- CSRF token protection
+- Server-side CSRF validation
+- Session revocation on logout
+- Session revocation following password reset
+- IP/action rate limiting
+- Request body limits
+- Check-in payload validation
+- Per-user authorization checks
+- Restricted CORS configuration
+- Production configuration gates
+- API documentation disabled outside development mode
+
+---
+
+Security Verification
+
+v1.0.0 has undergone an authorized local security and adversarial assessment.
+
+Automated verification
+
+14 tests passed in the previously clean unit/contract run.
+
+Concurrent testing
+
+24/24 concurrent user journeys succeeded.
+
+Test journey:
+
+Register
+→ Profile
+→ Check-in
+→ Signals
+→ Patterns
+→ Report
+→ Account
+
+Adversarial testing
+
+42/42 probes passed.
+
+Test areas included:
+
+- Weak passwords
+- Account enumeration
+- Authentication error consistency
+- CSRF bypass attempts
+- Session reuse after logout
+- Cross-user data access
+- Unauthenticated API access
+- Unknown check-in types
+- Oversized text
+- Excessive payload keys
+- Oversized request bodies
+- Path probing
+- Login throttling
+- Concurrent check-in requests
+
+These results apply to the local development build and should not be interpreted as a production penetration test.
+
+---
+
+Development Setup
+
+Requirements
+
+- Python 3.x
+- pip
+- Docker (optional)
+
+Clone
+
+git clone https://github.com/faruoqu146-ctrl/NexGene_v1_0_0.git
+cd NexGene_v1_0_0
+
+Install dependencies
+
+pip install -r requirements.txt
+
+Development environment
+
+Set:
+
+DEV_MODE=true
+
+Configure the local database:
+
+DATABASE_URL=sqlite:///./nexgene.db
+
+Run the application using the project's configured FastAPI entry point.
+
+The local development environment may expose interactive API documentation.
+
+Do not expose a DEV_MODE deployment to the public internet.
+
+---
+
+Testing
+
+Unit / contract suite:
+
 DATABASE_URL=sqlite:////tmp/nexgene_test.db pytest -q
-```
 
-Inside Compose:
+Concurrent stress testing:
 
-```bash
-docker compose exec api pytest -q
-```
+python scripts/live_stress.py --users 24 --gets 80
 
-Live concurrent stress (API already running):
+Adversarial probes:
 
-```bash
-python scripts/live_stress.py --users 20 --gets 80
-```
+python scripts/adversarial_probe.py
 
-Health check: `GET /api/v1/health` → `{"status":"ok","version":"1.0.0"}`.
+Health check:
 
-## v1.0.0: Personalization + Weekly Report
+GET /api/v1/health
 
-- Adds a lightweight personal-context profile: age range, country, occupation/work role, student status, study field, schedule and optional timezone.
-- Context is used as an analysis lens, not a stereotype engine. Occupation and country do not automatically produce health conclusions.
-- Adds `/api/v1/profile` with authenticated, CSRF-protected updates.
-- Adds the **Weekly NexGene Report** at `/api/v1/reports/weekly`.
-- Weekly reports summarize recorded signal, compare with the available personal window, identify cautious relationships, surface positive observations, and offer one small experiment for the following week.
-- Reports explicitly distinguish patterns from diagnoses and avoid pretending that one week proves causation.
-- The UI adds a lightweight context onboarding screen and a dedicated REPORT view.
-- User/API-derived report content is rendered through safe DOM construction, not `innerHTML`.
+Expected development response:
 
-## Security posture carried forward
+{
+  "status": "ok",
+  "version": "1.0.0"
+}
 
-- Production startup refuses weak/missing `SECRET_KEY`.
-- Production startup requires `COOKIE_SECURE=true`.
-- Production disables `/docs`, `/redoc`, and `/openapi.json`.
-- Login uses a dummy PBKDF2 verification path for missing accounts.
-- Registration uses a uniform response for existing accounts.
-- Password-reset requests never expose reset tokens outside `DEV_MODE`.
-- Rate limiting is persisted in the database.
-- Check-in payloads are capped by request size, observation count, allow-list and text length.
-- CSRF rotation updates the server-side session hash.
-- Session revocation remains active on logout and password reset.
-- PBKDF2-SHA256 uses 600,000 rounds.
+---
 
-## Development configuration
+Production Status
 
-Local development intentionally keeps `DEV_MODE=true` and `COOKIE_SECURE=false` so the app can run on plain HTTP. Development-only verification/reset tokens may appear in API responses because no mail provider is configured.
+NexGene v1.0.0 is not production-ready.
 
-**Never expose that configuration publicly.** Production must use a strong random `SECRET_KEY`, `DEV_MODE=false`, `COOKIE_SECURE=true`, HTTPS, and a managed database.
+Before public or multi-tenant deployment:
 
-## Current scope
+- Set "DEV_MODE=false"
+- Generate a strong random "SECRET_KEY"
+- Enforce HTTPS
+- Set "COOKIE_SECURE=true"
+- Replace local SQLite with a managed database
+- Disable "/docs"
+- Disable "/redoc"
+- Disable "/openapi.json"
+- Remove development reset/verification tokens from external responses
+- Configure real email delivery for verification and password reset
+- Implement backups
+- Configure monitoring
+- Ensure logs do not contain passwords, tokens, or unnecessary personal data
+- Re-run the complete test suite against staging
+- Perform an independent security review before introducing clinical or genomic data
 
-v1.0.0 remains a development build for lifestyle and simple physiological signals. Clinical and genetic data are not connected to this release. Those future domains require separate authorization boundaries, stronger isolation, auditability, provenance, explicit patient consent and dedicated security testing before integration.
+---
 
-The four NexGene data pillars remain equal in the long-term data model: lifestyle, physiological, clinical and genetic. User interaction remains lifestyle-heavy, with simple physiological entry available and hospital-driven clinical/genetic ingestion planned later.
+Current Limitations
 
-## NexGene Signals
+v1.0.0 does not currently provide:
 
-Signals provide gentle, data-driven reasons to return without guilt-based streak mechanics: early baseline milestones, changes in readings, emerging relationships and reasons to check in or explore Patterns.
+- Clinical data ingestion
+- Genetic or genomic data ingestion
+- Hospital-system integration
+- Medical diagnosis
+- Clinical decision support
+- Validated disease prediction
+- Continuous molecular monitoring
+- Continuous wearable-device integration
+- Medical-grade physiological monitoring
 
-## Weekly NexGene Report
+The long-term architecture may support these domains, but they are outside the scope of this release.
 
-The product cadence is now:
+---
 
-**Record → Discover → Get curious → Return → Discover more → Weekly report**
+Roadmap
 
-The report is intentionally conversational. Serious calculations stay underneath; the user-facing layer should feel like a smart friend who has been quietly paying attention, not a statistics department.
+Phase 1 — Lifestyle
+
+Current
+
+Build a longitudinal record of lifestyle and contextual observations.
+
+Phase 2 — Physiology
+
+Future integration of richer physiological measurements and potentially external sensor/wearable data.
+
+Phase 3 — Clinical
+
+Future integration of structured clinical information, subject to appropriate consent, interoperability, privacy, security, and clinical governance requirements.
+
+Phase 4 — Genomic
+
+Future integration of genomic information and associated biological data.
+
+The four layers are ultimately intended to become interoperable rather than isolated datasets.
+
+             NEXGENE
+                │
+      ┌─────────┼─────────┐
+      │         │         │
+  Lifestyle  Physiology  Clinical
+      │         │         │
+      └─────────┼─────────┘
+                │
+             Genomic
+                │
+                ▼
+     Longitudinal Biological Profile
+
+---
+
+Design Principle
+
+NexGene is being built around a simple premise:
+
+«A person's biology is not a snapshot.»
+
+Lifestyle changes.
+Physiology changes.
+Clinical states change.
+Molecular states change.
+
+NexGene's long-term purpose is to build the infrastructure necessary to observe those changes longitudinally and connect the layers responsibly.
+
+v1.0.0 is only the beginning.
+
+---
+
+Status
+
+Version: "1.0.0"
+Stage: Development
+Current layer: Lifestyle
+Security assessment: Completed for defined local-development scope
+Production status: Not ready
+
+The Raven is building. 🐦‍⬛
+
+---
+
